@@ -1,0 +1,58 @@
+{
+  "name": "slotwell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Slotwell — a minimal, self-hosted scheduling tool: share a link, let clients pick a free slot, get a confirmed meeting.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "next dev --port 3004",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:db",
+    "db:up": "podman compose --env-file .env.local up -d postgres mailpit",
+    "db:down": "podman compose --env-file .env.local down",
+    "db:migrate": "node --env-file-if-exists=.env.local server/migrate.mjs",
+    "test:db": "node scripts/db-smoke-test.mjs",
+    "test:e2e": "podman exec -i -w /app slotwell-app-1 node --input-type=module - < scripts/admin-e2e.mjs",
+    "db:seed": "node --env-file-if-exists=.env.local scripts/seed.mjs",
+    "podman:up": "podman compose --env-file .env.local up -d --build",
+    "podman:down": "podman compose --env-file .env.local down",
+    "podman:up:windows": "podman compose -f compose.windows.yml --env-file .env.local up -d --build",
+    "podman:down:windows": "podman compose -f compose.windows.yml --env-file .env.local down"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.4",
+    "clsx": "^2.1.1",
+    "geist": "^1.7.2",
+    "lucide-react": "^1.31.0",
+    "next": "^16.3.5",
+    "nodemailer": "^10.0.9",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.2",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

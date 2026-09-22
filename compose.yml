@@ -1,0 +1,52 @@
+# Local development stack (Podman). Ports differ from the invoice generator
+# (3000 / 5432 / 1025 / 18025) so both projects can run at the same time.
+#
+#   npm run podman:up    → app on http://localhost:3004, email inbox on http://localhost:18026
+#   npm run db:up        → only PostgreSQL + Mailpit (for `npm run dev` on the host)
+#
+# On Windows (Podman WSL machine) use compose.windows.yml instead: `npm run podman:up:windows`.
+services:
+  app:
+    build: .
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://${DB_USER:-slotwell_user}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-slotwell}"
+      APP_URL: http://localhost:3004
+      BETTER_AUTH_URL: http://localhost:3004
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      # Local demo defaults; set CALENDAR_PROVIDER=google + Google keys in .env.local to use your real calendar.
+      CALENDAR_PROVIDER: ${CALENDAR_PROVIDER:-none}
+      DEV_PASSWORD_LOGIN: ${DEV_PASSWORD_LOGIN:-true}
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:3004:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-slotwell}
+      POSTGRES_USER: ${DB_USER:-slotwell_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:5433:5432"
+    volumes:
+      - slotwell_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  mailpit:
+    image: docker.io/axllent/mailpit:v1.29
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:1026:1025"
+      - "${HOST_BIND:-127.0.0.1}:18026:8025"
+volumes:
+  slotwell_postgres_data:
